@@ -1,0 +1,60 @@
+
+这是应用的主要程序：
+
+package com.example.listfile;
+
+import java.io.File;   
+import java.io.IOException;   
+ 
+import android.app.Activity;   
+import android.content.Context;
+import android.widget.TextView;
+import android.os.Bundle;     
+import android.os.Process;
+
+public class MainActivity extends Activity
+{
+    /** Called when the activity is first created. */
+    @Override
+    public void onCreate(Bundle savedInstanceState)
+    {
+        super.onCreate(savedInstanceState);
+        int myProcessID = Process.myPid();
+        File yygypath = this.getFilesDir();//this.getCacheDir();
+        String yygypathstr = yygypath.toString();
+        File file = new File(yygypath, "yygytest"); 
+        try {
+			file.createNewFile();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        yygypathstr = yygypathstr + " pid is " + myProcessID;
+        
+        TextView  tv = new TextView(this);
+        tv.setText(yygypathstr);
+        setContentView(tv);
+    }
+    public void onDestory()
+    {
+    	super.onDestroy();
+    	this.finish();
+    	android.os.Process.killProcess(android.os.Process.myPid());
+    	System.exit(0);    	
+    }
+}
+
+模拟器中的执行结果为：
+
+使用adb shell到模拟器上查看此应用的目录下的新建的yygytest的文件：
+adb shell result:
+ root@generic:/data/data/com.example.listfile/files # ll                        
+-rw------- u0_a53   u0_a53          0 2014-04-21 13:38 yygytest
+root@generic:/data/data/com.example.listfile/files # 
+
+其中最重要的函数为：
+
+this.getFilesDir() 此方法得到/data/data/com.example.listfile/files路径;
+this.getCacheDir() 此方法得到/data/data/com.example.listfile/cache路径;
+
+
