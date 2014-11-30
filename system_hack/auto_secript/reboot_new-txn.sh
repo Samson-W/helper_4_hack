@@ -1,5 +1,4 @@
 #!/bin/bash
-#Author:ShangJun
 
 export LANG="zh_CN.UTF-8"
 
