@@ -1,0 +1,6 @@
+其中.vimrc是对vim编辑器本身的配置，而.vim目录是安装插件的地方。
+
+vim文件后，在nomal模式输入以下命令就可以出现IDE的环境了，
+WMToggle
+要自动补全的话，则使用c-x c-o即可，前提是要使用ctags进行索引。
+http://blog.csdn.net/h_armony/article/details/7223022
