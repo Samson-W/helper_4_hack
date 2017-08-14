@@ -1,0 +1,78 @@
+# 如何将grsecurity补丁打到内核进行编译
+
+* 将以4.9.24内核版本进行示例   
+
+## 下载内核代码并进行验证
+
+* 注意：kernel代码与grsecurity patch的文件存放在一个目录下；
+
+### 下载内核代码及签名文件 
+```
+$ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.24.tar.xz
+$ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.24.tar.sign
+```
+
+### 验证
+
+#### 获取公钥  
+
+```
+# gpg --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E
+```
+
+如果出现如下的错误，则表示有包没有安装成功：
+
+```
+# gpg --keyserver hkp://keys.gnupg.net --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E 
+gpg: failed to start the dirmngr '/usr/bin/dirmngr': No such file or directory
+gpg: connecting dirmngr at '/root/.gnupg/S.dirmngr' failed: No such file or directory
+gpg: keyserver receive failed: No dirmngr
+```
+
+安装缺失的包：
+```
+# apt-get install dirmngr
+```
+
+#### 进行验证 
+```
+# unxz linux-4.9.24.tar.xz
+# gpg --verify linux-4.9.24.tar.sign  
+gpg: assuming signed data in 'linux-4.9.24.tar'
+gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
+gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
+gpg: Good signature from "Greg Kroah-Hartman (Linux kernel stable release signing key) <greg@kroah.com>" [unknown]
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
+```
+
+## 下载grsecurity patch并验证 
+```
+# gpg --verify linux-4.9.24.tar.sign 
+gpg: assuming signed data in 'linux-4.9.24.tar'
+gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
+gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
+gpg: Good signature from "Greg Kroah-Hartman (Linux kernel stable release signing key) <greg@kroah.com>" [unknown]
+gpg: WARNING: This key is not certified with a trusted signature!
+gpg:          There is no indication that the signature belongs to the owner.
+Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
+```
+
+## 配置并编译内核 
+
+### 配置 
+
+```
+# cd linux-4.9.24
+# patch -p1 -l < ../grsecurity-3.1-4.9.24-201704210851.patch
+# make menuconfig
+# make deb-pkg -j5
+```
+
+## 安装 
+```
+linux-4.9.24 # cd ..
+# dpkg -i *.deb
+```
+
