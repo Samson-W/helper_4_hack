@@ -2,6 +2,14 @@
 
 * 将以4.9.24内核版本进行示例   
 
+原操作系统发行版本：debian 9.1  
+原操作系统内核版本：4.9.30-2+deb9u3 (2017-08-06) x86_64 GNU/Linux  
+
+## 前期准备工作 
+```
+# apt-get install -y patch make build-essential libncurses5-dev bc dirmngr
+```
+
 ## 下载内核代码并进行验证
 
 * 注意：kernel代码与grsecurity patch的文件存放在一个目录下；
@@ -14,31 +22,26 @@ $ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.24.tar.sign
 
 ### 验证
 
+#### 进行验证 
+```
+# unxz linux-4.9.24.tar.xz
+# gpg --verify linux-4.9.24.tar.sign
+gpg: assuming signed data in 'linux-4.9.24.tar'
+gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
+gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
+gpg: Can't check signature: No public key
+```
+在验证的时候出现了以上的错误，则表示验证的公钥在本地没有，需要进行公钥的获取：
+
 #### 获取公钥  
 
 ```
 # gpg --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E
 ```
 
-如果出现如下的错误，则表示有包没有安装成功：
-
+#### 验证 
 ```
-# gpg --keyserver hkp://keys.gnupg.net --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E 
-gpg: failed to start the dirmngr '/usr/bin/dirmngr': No such file or directory
-gpg: connecting dirmngr at '/root/.gnupg/S.dirmngr' failed: No such file or directory
-gpg: keyserver receive failed: No dirmngr
-```
-
-安装缺失的包：
-```
-# apt-get install dirmngr
-```
-
-#### 进行验证 
-```
-# unxz linux-4.9.24.tar.xz
-# gpg --verify linux-4.9.24.tar.sign  
-gpg: assuming signed data in 'linux-4.9.24.tar'
+gpg --verify linux-4.9.24.tar.sign gpg: assuming signed data in 'linux-4.9.24.tar'
 gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
 gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
 gpg: Good signature from "Greg Kroah-Hartman (Linux kernel stable release signing key) <greg@kroah.com>" [unknown]
@@ -46,29 +49,86 @@ gpg: WARNING: This key is not certified with a trusted signature!
 gpg:          There is no indication that the signature belongs to the owner.
 Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
 ```
+
+查看第四行，可看出此包通过了验证；
 
 ## 下载grsecurity patch并验证 
+
+### 下载grsecurity patch及验签文件
 ```
-# gpg --verify linux-4.9.24.tar.sign 
-gpg: assuming signed data in 'linux-4.9.24.tar'
-gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
-gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
-gpg: Good signature from "Greg Kroah-Hartman (Linux kernel stable release signing key) <greg@kroah.com>" [unknown]
+wget http://mirrors.muarf.org/grsecurity/test/grsecurity-3.1-4.9.24-201704252333.patch.gz
+wget http://mirrors.muarf.org/grsecurity/test/grsecurity-3.1-4.9.24-201704252333.patch.sig
+```
+
+### 解压patch包
+```
+gzip -d grsecurity-3.1-4.9.24-201704252333.patch.gz
+```
+
+### 验证
+
+```
+# gpg --verify grsecurity-3.1-4.9.24-201704252333.patch.sig 
+gpg: assuming signed data in 'grsecurity-3.1-4.9.24-201704252333.patch'
+gpg: Signature made Tue 25 Apr 2017 11:36:10 PM EDT
+gpg:                using RSA key 44D1C0F82525FE49
+gpg: Can't check signature: No public key
+```
+
+### 下载对应的公钥 
+```
+# gpg --keyserver hkp://keys.gnupg.net --recv-keys  44D1C0F82525FE49
+gpg: key 44D1C0F82525FE49: public key "Bradley Spengler (spender) <spender@grsecurity.net>" imported
+gpg: no ultimately trusted keys found
+gpg: Total number processed: 1
+gpg:               imported: 1
+
+```
+
+### 再次验证
+```
+gpg --verify grsecurity-3.1-4.9.24-201704252333.patch.sig 
+gpg: assuming signed data in 'grsecurity-3.1-4.9.24-201704252333.patch'
+gpg: Signature made Tue 25 Apr 2017 11:36:10 PM EDT
+gpg:                using RSA key 44D1C0F82525FE49
+gpg: Good signature from "Bradley Spengler (spender) <spender@grsecurity.net>" [unknown]
 gpg: WARNING: This key is not certified with a trusted signature!
 gpg:          There is no indication that the signature belongs to the owner.
-Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
+Primary key fingerprint: DE94 52CE 46F4 2094 907F  108B 44D1 C0F8 2525 FE49
 ```
+
+查看第四行，可看出此包通过了验证；
+
 
 ## 配置并编译内核 
 
-### 配置 
+### 将grsecurity补丁合并到内核代码
 
 ```
+# tar xvf linux-4.9.24.tar
 # cd linux-4.9.24
 # patch -p1 -l < ../grsecurity-3.1-4.9.24-201704210851.patch
+```
+
+### 进行内核编译前的配置 
+```
 # make menuconfig
+```
+在出现的配置界面中，选择Security options/Grsecurity/中的Configuration Method项选择为Automatic;
+Usage Type项选择为Server;
+Required priorities项选择为Security；
+
+其它保持默认即可；
+
+然后进行保存为.config文件即可；
+
+### 进行内核的编译 
+
+```
 # make deb-pkg -j5
 ```
+
+* 说明：-j5表示当前系统的核数为4核；
 
 ## 安装 
 ```
