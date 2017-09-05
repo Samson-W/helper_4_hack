@@ -5,9 +5,13 @@
 原操作系统发行版本：debian 9.1  
 原操作系统内核版本：4.9.30-2+deb9u3 (2017-08-06) x86_64 GNU/Linux  
 
-## 前期准备工作 
+## 前期准备工作
+
+以下的操作是在sudo已经安装并在/etc/sudoers文件中正确配置了普通用户的权限；  
+
+ 
 ```
-# apt-get install -y patch make build-essential libncurses5-dev bc dirmngr
+$ sudo apt-get install -y patch make build-essential libncurses5-dev bc dirmngr
 ```
 
 ## 下载内核代码并进行验证
@@ -20,12 +24,12 @@ $ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.24.tar.xz
 $ wget https://cdn.kernel.org/pub/linux/kernel/v4.x/linux-4.9.24.tar.sign
 ```
 
-### 验证
+### 验证完整性
 
 #### 进行验证 
 ```
-# unxz linux-4.9.24.tar.xz
-# gpg --verify linux-4.9.24.tar.sign
+$ unxz linux-4.9.24.tar.xz
+$ gpg --verify linux-4.9.24.tar.sign
 gpg: assuming signed data in 'linux-4.9.24.tar'
 gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
 gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
@@ -36,12 +40,12 @@ gpg: Can't check signature: No public key
 #### 获取公钥  
 
 ```
-# gpg --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E
+$ gpg --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E
 ```
 
 #### 验证 
 ```
-gpg --verify linux-4.9.24.tar.sign gpg: assuming signed data in 'linux-4.9.24.tar'
+$ gpg --verify linux-4.9.24.tar.sign gpg: assuming signed data in 'linux-4.9.24.tar'
 gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
 gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
 gpg: Good signature from "Greg Kroah-Hartman (Linux kernel stable release signing key) <greg@kroah.com>" [unknown]
@@ -56,19 +60,19 @@ Primary key fingerprint: 647F 2865 4894 E3BD 4571  99BE 38DB BDC8 6092 693E
 
 ### 下载grsecurity patch及验签文件
 ```
-wget http://mirrors.muarf.org/grsecurity/test/grsecurity-3.1-4.9.24-201704252333.patch.gz
-wget http://mirrors.muarf.org/grsecurity/test/grsecurity-3.1-4.9.24-201704252333.patch.sig
+$ wget http://mirrors.muarf.org/grsecurity/test/grsecurity-3.1-4.9.24-201704252333.patch.gz
+$ wget http://mirrors.muarf.org/grsecurity/test/grsecurity-3.1-4.9.24-201704252333.patch.sig
 ```
 
 ### 解压patch包
 ```
-gzip -d grsecurity-3.1-4.9.24-201704252333.patch.gz
+$ gzip -d grsecurity-3.1-4.9.24-201704252333.patch.gz
 ```
 
 ### 验证
 
 ```
-# gpg --verify grsecurity-3.1-4.9.24-201704252333.patch.sig 
+$ gpg --verify grsecurity-3.1-4.9.24-201704252333.patch.sig 
 gpg: assuming signed data in 'grsecurity-3.1-4.9.24-201704252333.patch'
 gpg: Signature made Tue 25 Apr 2017 11:36:10 PM EDT
 gpg:                using RSA key 44D1C0F82525FE49
@@ -77,7 +81,7 @@ gpg: Can't check signature: No public key
 
 ### 下载对应的公钥 
 ```
-# gpg --keyserver hkp://keys.gnupg.net --recv-keys  44D1C0F82525FE49
+$ gpg --keyserver hkp://keys.gnupg.net --recv-keys  44D1C0F82525FE49
 gpg: key 44D1C0F82525FE49: public key "Bradley Spengler (spender) <spender@grsecurity.net>" imported
 gpg: no ultimately trusted keys found
 gpg: Total number processed: 1
@@ -87,7 +91,7 @@ gpg:               imported: 1
 
 ### 再次验证
 ```
-gpg --verify grsecurity-3.1-4.9.24-201704252333.patch.sig 
+$ gpg --verify grsecurity-3.1-4.9.24-201704252333.patch.sig 
 gpg: assuming signed data in 'grsecurity-3.1-4.9.24-201704252333.patch'
 gpg: Signature made Tue 25 Apr 2017 11:36:10 PM EDT
 gpg:                using RSA key 44D1C0F82525FE49
@@ -105,15 +109,17 @@ Primary key fingerprint: DE94 52CE 46F4 2094 907F  108B 44D1 C0F8 2525 FE49
 ### 将grsecurity补丁合并到内核代码
 
 ```
-# tar xvf linux-4.9.24.tar
-# cd linux-4.9.24
-# patch -p1 -l < ../grsecurity-3.1-4.9.24-201704210851.patch
+$ tar xvf linux-4.9.24.tar
+$ cd linux-4.9.24
+$ patch -p1 -l < ../grsecurity-3.1-4.9.24-201704210851.patch
 ```
 
 ### 进行内核编译前的配置 
+
 ```
-# make menuconfig
+$ make menuconfig
 ```
+
 在出现的配置界面中，选择Security options/Grsecurity/中的Configuration Method项选择为Automatic;
 Usage Type项选择为Server;
 Required priorities项选择为Security；
@@ -125,14 +131,26 @@ Required priorities项选择为Security；
 ### 进行内核的编译 
 
 ```
-# make deb-pkg -j5
+$ make deb-pkg -j5
 ```
 
-* 说明：-j5表示当前系统的核数为4核；
+* 说明：-j5表示当前系统的核数为4核，可根据自己的cpu核数进行调整；
 
 ## 安装 
 ```
-linux-4.9.24 # cd ..
-# dpkg -i *.deb
+linux-4.9.24 $ cd ..
+$ sudo dpkg -i *.deb
 ```
 
+## 重新启动
+
+```
+$ sudo reboot
+```
+
+## 验证是否安装成功
+
+```
+$ uname -r
+4.9.24-grsec
+```
