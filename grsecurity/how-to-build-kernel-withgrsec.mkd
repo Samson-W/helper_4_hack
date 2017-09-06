@@ -111,7 +111,7 @@ Primary key fingerprint: DE94 52CE 46F4 2094 907F  108B 44D1 C0F8 2525 FE49
 ```
 $ tar xvf linux-4.9.24.tar
 $ cd linux-4.9.24
-$ patch -p1 -l < ../grsecurity-3.1-4.9.24-201704210851.patch
+$ patch -p1 -l < ../grsecurity-3.1-4.9.24-201704252333.patch
 ```
 
 ### 进行内核编译前的配置 
