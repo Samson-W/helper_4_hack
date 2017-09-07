@@ -1,0 +1,133 @@
+# 如何配置基于grsec RBAC的nginx的配置流程  
+
+* 在已经将grsecurity的4.9.24内核版本补丁的debian 9.1发行版本上进行nginx的简单的RBAC的一个示例。   
+
+原操作系统发行版本：debian 9.1  
+原操作系统内核版本：4.9.30-2+deb9u3 (2017-08-06) x86_64 GNU/Linux  
+
+## 进行例外程序的添加 
+
+```
+$ git clone https://github.com/hardenedlinux/hardenedlinux_profiles.git
+$ cd hardenedlinux_profiles/debian/
+$ bash ./debian_auto_deploy.sh 
+```
+
+执行完以上的脚本后，若成功则会出现如下信息：
+
+```
+*- elfix package: OK
+Adding PaX flags m onto binary /usr/bin/java
+Adding PaX flags m onto binary /usr/lib/jvm/java-9-openjdk-amd64/bin/*
+Adding PaX flags m onto binary /usr/lib/jvm/java-8-openjdk-amd64/bin/*
+Adding PaX flags m onto binary /usr/bin/qemu-system-*
+Adding PaX flags m onto binary /usr/bin/stress-ng
+Adding PaX flags mr onto binary /usr/bin/python2.7
+Adding PaX flags m onto binary /usr/bin/gnome-shell
+Adding PaX flags m onto binary /usr/lib/gnome-session/gnome-session-binary
+Adding PaX flags m onto binary /usr/bin/pulseaudio
+Adding PaX flags m onto binary /usr/lib/gnome-terminal/gnome-terminal-server
+Adding PaX flags me onto binary /opt/google/chrome/chrome
+Adding PaX flags pme onto binary /opt/google/chrome/nacl_helper
+Adding PaX flags me onto binary /opt/google/chrome/chrome-sandbox
+Adding PaX flags mr onto binary /usr/bin/hashcat
+```
+
+## 安装gradm程序 
+
+### 从官方下载源代码并进行编译安装 
+
+```
+$ wget https://grsecurity.net/stable/gradm-3.1-201709030627.tar.gz
+```
+
+### 解压并编译 
+
+#### 编译前需要安装的包：
+```
+$ sudo apt-get install bison flex libpam0g-dev 
+```
+
+#### 解压 
+```
+$ tar zxvf gradm-3.1-201709030627.tar.gz 
+```
+
+#### 进行编译  
+```
+$ make 
+$ sudo make install 
+```
+
+在进行安装的时候，会提示"Setting up grsecurity RBAC password"进行密码的设置，设置健壮的密码，且不要与root用户的密码相同。
+
+#### 检测是否安装成功 
+```
+$ sudo gradm -v
+gradm v3.1 - grsecurity RBAC administration and policy analysis utility
+Copyright 2002-2015 - Brad Spengler, Open Source Security, Inc.
+Email: spender@grsecurity.net
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License version 2 as published
+by the Free Software Foundation.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+```
+
+## 安装nginx 
+
+```
+$ sudo apt-get install nginx 
+```
+
+## 开启grsec RBAC的全系统学习模式 
+
+grsecr的RBAC环境及nginx应用已经一切就绪，那么现在要做的就是进行grsec RBAC的学习模式的开启了；
+
+首先，我们来查看一下当前grsec RBAC的状态：
+```
+$ sudo gradm -S
+[sudo] password for grsec: 
+The RBAC system is currently disabled.
+```
+
+确认nginx能够正常访问：
+```
+$ sudo netstat  -ntpl | grep nginx
+tcp        0      0 0.0.0.0:80              0.0.0.0:*               LISTEN      6676/nginx: master  
+tcp6       0      0 :::80                   :::*                    LISTEN      6676/nginx: master
+```
+
+开启全系统学习模式：
+
+可能遇到的问题：
+```
+$ sudo gradm -F -L /etc/grsec/learning.logs
+No password exists for special role admin.
+Run gradm -P admin to set up a password for the role.
+```
+
+遇到以上问题时，是因为grsec RBAC是需要对每个role进行保护密码的设置的，只要执行以下命令进行密码的设置即可。
+
+```
+$ sudo gradm -P admin
+Password: 
+Re-enter Password: 
+Password written to /etc/grsec/pw.
+```
+
+再次开启：
+```
+$ sudo gradm -F -L /etc/grsec/learning.logs
+$ sudo gradm -S
+The RBAC system is currently enabled.
+```
+
+
