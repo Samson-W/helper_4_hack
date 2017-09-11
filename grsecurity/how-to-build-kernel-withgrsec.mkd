@@ -45,7 +45,8 @@ $ gpg --recv-keys 647F28654894E3BD457199BE38DBBDC86092693E
 
 #### 验证 
 ```
-$ gpg --verify linux-4.9.24.tar.sign gpg: assuming signed data in 'linux-4.9.24.tar'
+$ gpg --verify linux-4.9.24.tar.sign 
+gpg: assuming signed data in 'linux-4.9.24.tar'
 gpg: Signature made Fri 21 Apr 2017 03:31:59 AM EDT
 gpg:                using RSA key 647F28654894E3BD457199BE38DBBDC86092693E
 gpg: Good signature from "Greg Kroah-Hartman (Linux kernel stable release signing key) <greg@kroah.com>" [unknown]
@@ -154,3 +155,12 @@ $ sudo reboot
 $ uname -r
 4.9.24-grsec
 ```
+
+## 修复依赖 
+
+由于内核版本发生了变化(降低了版本号)，在后续使用apt相关命令时，可能会出现安装包的依赖关系检查不通过的情况，为了防止这种情况在日后的使用中出现问题，故在内核发生变化后，使用如下命令进行修复：
+```
+# apt --fix-broken install
+```
+
+

@@ -5,11 +5,10 @@
 原操作系统发行版本：debian 9.1  
 原操作系统内核版本：4.9.30-2+deb9u3 (2017-08-06) x86_64 GNU/Linux  
 
-## 进行例外程序的添加 
+## 进行PaX例外程序的添加 
 
 ```
-$ git clone https://github.com/hardenedlinux/hardenedlinux_profiles.git
-$ cd hardenedlinux_profiles/debian/
+$ wget https://raw.githubusercontent.com/hardenedlinux/hardenedlinux_profiles/master/debian/debian_auto_deploy.sh
 $ bash ./debian_auto_deploy.sh 
 ```
 
@@ -45,7 +44,7 @@ $ wget https://grsecurity.net/stable/gradm-3.1-201709030627.tar.gz
 
 #### 编译前需要安装的包：
 ```
-$ sudo apt-get install bison flex libpam0g-dev 
+$ sudo apt-get install -y bison flex libpam0g-dev 
 ```
 
 #### 解压 
@@ -55,7 +54,7 @@ $ tar zxvf gradm-3.1-201709030627.tar.gz
 
 #### 进行编译  
 ```
-$ make 
+$ cd gradm; make 
 $ sudo make install 
 ```
 
@@ -84,7 +83,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ## 安装nginx 
 
 ```
-$ sudo apt-get install nginx 
+$ sudo apt-get install -y nginx 
 ```
 
 ## 开启grsec RBAC的全系统学习模式 
@@ -109,7 +108,7 @@ tcp6       0      0 :::80                   :::*                    LISTEN      
 
 可能遇到的问题：
 ```
-$ sudo gradm -F -L /etc/grsec/learning.logs
+# gradm -F -L /etc/grsec/learning.logs
 No password exists for special role admin.
 Run gradm -P admin to set up a password for the role.
 ```
@@ -125,9 +124,124 @@ Password written to /etc/grsec/pw.
 
 再次开启：
 ```
-$ sudo gradm -F -L /etc/grsec/learning.logs
-$ sudo gradm -S
+# gradm -F -L /etc/grsec/learning.logs
+# gradm -u admin
+# gradm -S
 The RBAC system is currently enabled.
 ```
 
+进行nginx的自学习：
 
+在另一台机器上输入nginx这台服务器的地址，若能够看到Welcome to nginx!页面，表示能够正常访问；
+
+```
+wget http://10.0.100.224/
+```
+
+反复以上操作后，停止自学习模式，使用如下命令：
+
+```
+# gradm -D
+# gradm -S
+The RBAC system is currently disabled.
+```
+
+通过自学习的日志转换为RBAC的规则命令如下：
+
+```
+# gradm -F -L /etc/grsec/learning.logs -O /etc/grsec/policy
+```
+
+打开/etc/grsec/policy文件，可以看到有关于nginx的配置：
+
+```
+role www-data u
+role_allow_ip   0.0.0.0/32
+# Role: www-data
+subject /  {
+        /                               h
+        -CAP_ALL
+        bind    disabled
+        connect disabled
+}
+
+# Role: www-data
+subject /usr/sbin/nginx o {
+        /                               h
+        /var/www/html
+        /var/www/html/index.nginx-debian.html   r
+        -CAP_ALL
+        bind 0.0.0.0/32:80 stream tcp
+        connect disabled
+}
+```
+
+开启grsec rbac：
+```
+# gradm -E
+# gradm -S
+The RBAC system is currently enabled.
+```
+
+若有出现报错的信息的话，需要对报错进行处理后才能够正常地启动grsec rbac规则。
+
+## 验证grsec rbac对于nginx的限制 
+
+通过上面的规则可以看到，只有/var/www/html/index.nginx-debian.html能够进行访问，我们通过在/var/www/html/目录下再创建一个名为index.html的文件，在grsec rbac规则开启的情况下进行访问：
+
+```
+# gradm -D
+# cp /var/www/html/index.nginx-debian.html /var/www/html/index.html
+# gradm -E
+```
+
+获取web网页(此示例中的nginx web服务器地址为10.0.100.224)：
+```
+$ wget http://10.0.100.224/index.nginx-debian.html 
+--2017-09-11 15:35:56--  http://10.0.100.224/index.nginx-debian.html
+正在连接 10.0.100.224:80... 已连接。
+已发出 HTTP 请求，正在等待回应... 200 OK
+长度： 612 [text/html]
+正在保存至: “index.nginx-debian.html”
+
+index.nginx-debian.html                            100%[===============================================================================================================>]     612  --.-KB/s    in 0s      
+
+2017-09-11 15:35:56 (49.6 MB/s) - 已保存 “index.nginx-debian.html” [612/612])
+
+$ wget http://10.0.100.224/index.html
+--2017-09-11 15:36:03--  http://10.0.100.224/index.html
+正在连接 10.0.100.224:80... 已连接。
+已发出 HTTP 请求，正在等待回应... 403 Forbidden
+2017-09-11 15:36:03 错误 403：Forbidden。
+```
+
+可以看到获取index.html时会返回禁止访问的错误码。
+
+要使用能够访问index.html只需要在grsec RBAC规则里添加如下行即可：
+```
+# gradm -D
+```
+
+在/etc/grsec/policy文件的/var/www/html/index.nginx-debian.html   r行下添加如下行：
+```
+/var/www/html/index.html        r
+```
+
+修改保存后开启grsec RBAC规则：
+```
+# gradm -E
+```
+
+在另台主机上进行访问：
+```
+$ wget http://10.0.100.224/index.html
+--2017-09-11 15:52:11--  http://10.0.100.224/index.html
+正在连接 10.0.100.224:80... 已连接。
+已发出 HTTP 请求，正在等待回应... 200 OK
+长度： 617 [text/html]
+正在保存至: “index.html.5”
+
+index.html.5                                       100%[===============================================================================================================>]     617  --.-KB/s    in 0s      
+
+2017-09-11 15:52:11 (59.7 MB/s) - 已保存 “index.html.5” [617/617])
+```
