@@ -31,7 +31,7 @@ fi
 SPECIALCHARS=('!' '@' '#' '$' '%' '^' '&' '*' '(' ')' '_' '-' '+' '=' '~' '`' ';' ':' ',' '<' '.' '>' '[' ']' '{' '}' '|' '\' '/' '?' '"' "'") 
 
 if [ $(uname -o) == "Android" ]; then
-	TMEPFILE='./tmp/tmpnumber'
+	TMEPFILE='./tmpnumber'
 else
 	TMEPFILE='/tmp/tmpnumber'
 fi
