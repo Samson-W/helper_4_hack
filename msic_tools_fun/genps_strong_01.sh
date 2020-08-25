@@ -6,6 +6,7 @@
 # This script program realizes the generation of a 20-character password, 
 # including uppercase and lowercase, numbers, and special symbols, 
 # and the generated password string contains at least three types.
+# Support platform(full test): GNU/Linux and Android
 
 USAGEHELP="usage: bash ./genps.sh psstr"
 PSLEN=20
