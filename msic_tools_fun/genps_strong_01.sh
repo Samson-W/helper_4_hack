@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Author : Samson W (samson@hardenedlinux.org)
 # usage: 
 # bash ./genps.sh psstr
 # This script program realizes the generation of a 20-character password, 
