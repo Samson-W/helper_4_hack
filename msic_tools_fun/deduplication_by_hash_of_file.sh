@@ -27,6 +27,7 @@ HASHFILENAME="$2"
 HASHFILE_ONLYHASH="${HASHFILENAME}_only_hash"
 UNIQ_RESULT_FILE="${HASHFILENAME}_uniq"
 REPEATED_RESULT_FILE="${HASHFILENAME}_repeated_reuslt"
+REPEATED_RESULT_FILE_TEMP="${HASHFILENAME}_repeated_reuslt_temp"
 echo > "${HASHFILENAME}"
 
 # This is to solve the problem of spaces in the file name 
@@ -63,6 +64,9 @@ else
 	echo "Repeated file info is restory in $REPEATED_RESULT_FILE."
 	cat $UNIQ_RESULT_FILE | while read HASHV; do 
 		grep $HASHV $HASHFILENAME >> $REPEATED_RESULT_FILE
+		grep $HASHV $HASHFILENAME > $REPEATED_RESULT_FILE_TEMP
+		sed -i '1d' $REPEATED_RESULT_FILE_TEMP
+		rm -rf $(awk '{print $2}' $REPEATED_RESULT_FILE_TEMP)
 		echo '' >> $REPEATED_RESULT_FILE
 	done
 fi
