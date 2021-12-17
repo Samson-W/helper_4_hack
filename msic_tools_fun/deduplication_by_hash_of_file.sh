@@ -1,5 +1,6 @@
 #!/bin/bash
-# This script is for find repeated files
+# This script is for find repeated files and Delete the second occurrence of the file
+# The delete mothed is only suitable for situations where there are two duplicate files
 
 # $1 is begin root dir name
 # $2 is hash log file
@@ -66,6 +67,7 @@ else
 		grep $HASHV $HASHFILENAME >> $REPEATED_RESULT_FILE
 		grep $HASHV $HASHFILENAME > $REPEATED_RESULT_FILE_TEMP
 		sed -i '1d' $REPEATED_RESULT_FILE_TEMP
+		# If only find repeated file, please comment this line 
 		rm -rf $(awk '{print $2}' $REPEATED_RESULT_FILE_TEMP)
 		echo '' >> $REPEATED_RESULT_FILE
 	done
